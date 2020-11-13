@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-var m sync.Mutex
+var serverMutex sync.Mutex
 var usingSharedResource bool = false
 var sharedResourceUser  string
 
@@ -20,7 +20,7 @@ type SharedResourceService struct {
 
 func (*SharedResourceService) RequestSharedResource(req string, res *string) error {
 	fmt.Println(req, " is requesting shared resource")
-	m.Lock()
+	serverMutex.Lock()
 	if usingSharedResource {
 		fmt.Println(sharedResourceUser, " is using shared resource")
 		fmt.Println("Fatal Error occurred when request resource, Please check your Lamport Algorithm!!!!")
@@ -29,13 +29,13 @@ func (*SharedResourceService) RequestSharedResource(req string, res *string) err
 	sharedResourceUser = req
 	usingSharedResource = true
 	fmt.Println(req, " is using shared resource")
-	m.Unlock()
+	serverMutex.Unlock()
 	return nil
 }
 
 func (*SharedResourceService) ReleaseSharedResource(req string, res *string) error {
 	fmt.Println(req, " is releasing shared resource")
-	m.Lock()
+	serverMutex.Lock()
 	if !usingSharedResource {
 		fmt.Println("Fatal Error occurred when releasing resource, Please check your Lamport Algorithm!!!!")
 		return nil
@@ -43,12 +43,12 @@ func (*SharedResourceService) ReleaseSharedResource(req string, res *string) err
 	sharedResourceUser = ""
 	usingSharedResource = false
 	fmt.Println(req, " released shared resource")
-	m.Unlock()
+	serverMutex.Unlock()
 	return nil
 }
 
 func main() {
-	var p = flag.String("p", "8080", "fork service port")
+	var p = flag.String("p", "8080", "shared resource server listen port")
 	flag.Parse()
 	ip, err := getClientIp()
 	if err != nil {
