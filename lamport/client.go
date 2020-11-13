@@ -208,6 +208,7 @@ func client(clientID int)  {
                 RPCToOtherClient[msg.Sender].Call("ClientRPCService.SendLamportMessage", *msgReply, nil)
             }
         }
+        time.Sleep(100 * time.Millisecond)
     }
 }
 
