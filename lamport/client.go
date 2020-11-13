@@ -152,13 +152,25 @@ func client(clientID int)  {
         clientMutex.Lock()
         sizeOfMsgQ := MsgQ.Len()
         if sizeOfMsgQ > 0 {
+            minIndex := 0
+            var minValue int64 = -1
+            for i,v := range *MsgQ{
+                if minValue == -1 {
+                    minValue = v.TS
+                    minIndex = i
+                }
+                if v.TS <= minValue {
+                    minValue = v.TS
+                    minIndex = i
+                }
+            }
             msg = &LamportMessage{
-                MsgType:  (*MsgQ)[0].MsgType,
-                TS:       (*MsgQ)[0].TS,
-                Sender:   (*MsgQ)[0].Sender,
-                Receiver: (*MsgQ)[0].Receiver,
-                SendOut:  (*MsgQ)[0].SendOut,
-                Replied:  (*MsgQ)[0].Replied,
+                MsgType:  (*MsgQ)[minIndex].MsgType,
+                TS:       (*MsgQ)[minIndex].TS,
+                Sender:   (*MsgQ)[minIndex].Sender,
+                Receiver: (*MsgQ)[minIndex].Receiver,
+                SendOut:  (*MsgQ)[minIndex].SendOut,
+                Replied:  (*MsgQ)[minIndex].Replied,
             }
         }
         clientMutex.Unlock()
