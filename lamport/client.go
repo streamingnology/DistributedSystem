@@ -179,13 +179,13 @@ func client(clientID int)  {
             } else {
                 clientMutex.Lock()
                 allReplied := isAllClientReplied(MsgQ, clientID)
-                resetClientReplied()
                 clientMutex.Unlock()
                 if allReplied {
                     RPCToServer.Call("SharedResourceService.RequestSharedResource", clientNames[clientID], nil)
                     time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
                     RPCToServer.Call("SharedResourceService.ReleaseSharedResource", clientNames[clientID], nil)
                     clientMutex.Lock()
+                    resetClientReplied()
                     clientTimeStamp++
                     currentTS := clientTimeStamp
                     removeMessageInQ(MsgQ, clientID)
