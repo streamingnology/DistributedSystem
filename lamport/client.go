@@ -27,7 +27,7 @@ type ClientRPCService struct {
 func (*ClientRPCService) SendLamportMessage(req LamportMessage, res *string) error {
     clientMutex.Lock()
     defer clientMutex.Unlock()
-    fmt.Printf("Received message: %s \n", req.String())
+    fmt.Printf("[%s] Received message: %s \n",time.Now(), req.String())
     if req.TS > clientTimeStamp {
         clientTimeStamp = req.TS
     }
@@ -44,6 +44,11 @@ func (*ClientRPCService) SendLamportMessage(req LamportMessage, res *string) err
     }
     return nil
 }
+
+func logSendMessage(req LamportMessage) {
+    fmt.Printf("[%s] Send message: %s \n",time.Now(), req.String())
+}
+
 func isAllClientReplied(h *MessageQ, sender int) bool {
     allReplied := true
     for i, m := range requestReply{
@@ -52,6 +57,12 @@ func isAllClientReplied(h *MessageQ, sender int) bool {
         }
     }
     return allReplied
+}
+
+func resetClientReplied()  {
+    for i,_ := range requestReply{
+        requestReply[i] = false
+    }
 }
 func removeMessageInQ(h *MessageQ, sender int) {
     index := 0
@@ -74,7 +85,7 @@ func isSelfRequestInQ(id int) bool {
 }
 
 func client(clientID int)  {
-    clientTimeStamp = int64(rand.Intn(50))
+    clientTimeStamp = 0//int64(rand.Intn(50))
     fmt.Printf("%d init random timestamp is %d\n", clientID, clientTimeStamp)
     var connectedToServer = false
     var connectedToOtherClient = make(map[int]bool)
@@ -159,6 +170,8 @@ func client(clientID int)  {
             if !selfRequestSendOut {
                 for i, v := range RPCToOtherClient{
                     if i != clientID {
+                        msg.Receiver = i
+                        logSendMessage(*msg)
                         v.Call("ClientRPCService.SendLamportMessage", *msg, nil)
                     }
                 }
@@ -166,6 +179,7 @@ func client(clientID int)  {
             } else {
                 clientMutex.Lock()
                 allReplied := isAllClientReplied(MsgQ, clientID)
+                resetClientReplied()
                 clientMutex.Unlock()
                 if allReplied {
                     RPCToServer.Call("SharedResourceService.RequestSharedResource", clientNames[clientID], nil)
@@ -181,8 +195,10 @@ func client(clientID int)  {
                             MsgType:  Release,
                             TS:       currentTS,
                             Sender:   clientID,
+                            Receiver: i,
                         }
                         if i != clientID {
+                            logSendMessage(*msgReply)
                             v.Call("ClientRPCService.SendLamportMessage", *msgReply, nil)
                         }
                     }
@@ -204,7 +220,9 @@ func client(clientID int)  {
                     MsgType:  Reply,
                     TS:       currentTS,
                     Sender:   clientID,
+                    Receiver: msg.Sender,
                 }
+                logSendMessage(*msgReply)
                 RPCToOtherClient[msg.Sender].Call("ClientRPCService.SendLamportMessage", *msgReply, nil)
             }
         }
@@ -214,8 +232,8 @@ func client(clientID int)  {
 
 func main() {
     heap.Init(MsgQ)
-    totalClientNum := flag.Int("c", 2, "total client number")
-    clientIndex := flag.Int("i", 0, "client index")
+    totalClientNum := flag.Int("c", 3, "total client number")
+    clientIndex := flag.Int("i", 2, "client index")
     rpcListenPortStart := flag.Int("p", 8090, "RPC service port start from")
     serverAddr := flag.String("s", "127.0.0.1:8080", "shared resource server address")
     flag.Parse()
@@ -229,6 +247,7 @@ func main() {
     requestReply   = make(map[int]bool)
     clientRPCAddrs = make(map[int]string)
     clientNames    = make(map[int]string)
+    resetClientReplied()
     for i := 0; i < *totalClientNum; i++ {
         name := fmt.Sprintf("Client-%d", i)
         addr := fmt.Sprintf("%s:%d", ip, (*rpcListenPortStart)+i)
