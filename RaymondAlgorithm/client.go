@@ -83,7 +83,7 @@ func initTreeGraph(clientIndex int) {
     } else if clientIndex == 1 {
         rootOfThisClient = 0
         neigborClientIndexs = append(neigborClientIndexs, 0)
-        neigborClientIndexs = append(neigborClientIndexs, 1)
+        neigborClientIndexs = append(neigborClientIndexs, 2)
     } else if clientIndex == 2 {
         rootOfThisClient = 1
         neigborClientIndexs = append(neigborClientIndexs, 1)
@@ -167,7 +167,7 @@ func client(clientIndex int)  {
 }
 
 func main() {
-    totalClientNum := flag.Int("c", 2, "total client number")
+    totalClientNum := flag.Int("c", 5, "total client number")
     clientIndex := flag.Int("i", 1, "client index")
     rpcListenPortStart := flag.Int("p", 8090, "RPC service port start from")
     serverAddr := flag.String("s", "127.0.0.1:8080", "shared resource server address")
