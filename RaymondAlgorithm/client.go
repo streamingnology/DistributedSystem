@@ -155,6 +155,7 @@ func client(clientIndex int)  {
         } else { // THIS NODE IS NOT ROOT OF TREE
             if topRequestStatus {
                 // THIS REQUEST HAS ALREADY SEND OUT, WAITE
+                time.Sleep(100 * time.Millisecond)
             } else {
                 msg := NewRequestMessage(clientIndex)
                 RPCToNeigbors[rootOfThisClient].Call("ClientRPCService.SendRaymondMessage", msg, nil)
