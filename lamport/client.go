@@ -197,9 +197,11 @@ func client(clientID int)  {
                 allReplied := isAllClientReplied()
                 clientMutex.Unlock()
                 if allReplied {
+                    fmt.Printf("[%s] %d enter critial section\n", time.Now().Format("15:04:05.000"), clientID)
                     RPCToServer.Call("SharedResourceService.RequestSharedResource", fmt.Sprintf("%d", clientID), nil)
                     time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
                     RPCToServer.Call("SharedResourceService.ReleaseSharedResource", fmt.Sprintf("%d", clientID), nil)
+                    fmt.Printf("[%s] %d leave critial section\n", time.Now().Format("15:04:05.000"), clientID)
                     clientMutex.Lock()
                     resetClientReplied(clientID)
                     clientTimeStamp++
