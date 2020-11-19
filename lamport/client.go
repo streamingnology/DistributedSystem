@@ -24,7 +24,7 @@ type ClientRPCService struct { }
 func (*ClientRPCService) SendLamportMessage(req LamportMessage, res *string) error {
     clientMutex.Lock()
     defer clientMutex.Unlock()
-    fmt.Printf("[%s] Received message: %s \n",time.Now(), req.String())
+    fmt.Printf("[%s] Received message: %s \n",time.Now().Format("15:04:05.000"), req.String())
     if req.TS > clientTimeStamp {
         clientTimeStamp = req.TS
     }
@@ -43,7 +43,7 @@ func (*ClientRPCService) SendLamportMessage(req LamportMessage, res *string) err
 }
 
 func logSendMessage(req LamportMessage) {
-    fmt.Printf("[%s] Send message: %s \n",time.Now(), req.String())
+    fmt.Printf("[%s] Send message: %s \n",time.Now().Format("15:04:05.000"), req.String())
 }
 
 func isAllClientReplied() bool {
