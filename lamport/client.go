@@ -142,11 +142,27 @@ func client(clientID int)  {
         t2 := time.Now()
         if !isRequestSharedResource && (t2.Sub(t1) > 15) {
             clientMutex.Lock()
+            workaroundSameTS := false
             clientTimeStamp++
             currentTS := clientTimeStamp
-            heap.Push(MsgQ, *NewRequest(currentTS, clientID, clientID))
+            for _,v := range *MsgQ{
+                if v.TS == clientTimeStamp {
+                    workaroundSameTS = true
+                    break
+                }
+            }
+            if !workaroundSameTS {
+                heap.Push(MsgQ, *NewRequest(currentTS, clientID, clientID))
+            } else {
+                clientTimeStamp--
+            }
             clientMutex.Unlock()
-            selfRequestSendOut = false
+            if !workaroundSameTS {
+                selfRequestSendOut = false
+            } else {
+                time.Sleep(1*time.Second)
+            }
+
             t1 = t2
         } else {
 
@@ -198,9 +214,19 @@ func client(clientID int)  {
                 clientMutex.Unlock()
                 if allReplied {
                     fmt.Printf("[%s] %d enter critial section\n", time.Now().Format("15:04:05.000"), clientID)
-                    RPCToServer.Call("SharedResourceService.RequestSharedResource", fmt.Sprintf("%d", clientID), nil)
-                    time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
-                    RPCToServer.Call("SharedResourceService.ReleaseSharedResource", fmt.Sprintf("%d", clientID), nil)
+                    if RPCToServer != nil {
+                        e := RPCToServer.Call("SharedResourceService.RequestSharedResource", fmt.Sprintf("%d", clientID), nil)
+                        if e != nil {
+                            fmt.Println(e)
+                        }
+                        time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
+                        e = RPCToServer.Call("SharedResourceService.ReleaseSharedResource", fmt.Sprintf("%d", clientID), nil)
+                        if e != nil {
+                            fmt.Println(e)
+                        }
+                    } else {
+                        fmt.Println("Please Initialize RPC to Server")
+                    }
                     fmt.Printf("[%s] %d leave critial section\n", time.Now().Format("15:04:05.000"), clientID)
                     clientMutex.Lock()
                     resetClientReplied(clientID)
