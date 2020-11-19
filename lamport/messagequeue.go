@@ -9,7 +9,7 @@ import (
 type MessageQ []LamportMessage
 
 func (h MessageQ) Len() int           { return len(h) }
-func (h MessageQ) Less(i, j int) bool { return h[i].TS <= h[j].TS }
+func (h MessageQ) Less(i, j int) bool { return h[i].TS < h[j].TS }
 func (h MessageQ) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
 
 func (h *MessageQ) Push(x interface{}) {
