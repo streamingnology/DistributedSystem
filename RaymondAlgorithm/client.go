@@ -29,7 +29,7 @@ type ClientRPCService struct { }
 func (*ClientRPCService) SendRaymondMessage(req RaymondMessage, rep *string) error {
     mutex.Lock()
     defer mutex.Unlock()
-    fmt.Printf("[%s] Received message: %s \n",time.Now(), req.String())
+    fmt.Printf("[%s] Received message: %s \n",time.Now().Format("15:04:05.000"), req.String())
     if req.MsgType == Request {
         requestQ =  append(requestQ, req.Sender)
         requestStatusQ = append(requestStatusQ, false)
@@ -134,9 +134,17 @@ func client(clientIndex int)  {
         if rootOfThisClient < 0 { // THIS NODE is ROOT of TREE
             if topRequest == clientIndex {
                 // TODO: USE SHARED RESOURCE
-                RPCToServer.Call("SharedResourceService.RequestSharedResource", fmt.Sprintf("%d", clientIndex), nil)
+                fmt.Printf("[%s] %d enter critial section\n", time.Now().Format("15:04:05.000"), clientIndex)
+                e := RPCToServer.Call("SharedResourceService.RequestSharedResource", fmt.Sprintf("%d", clientIndex), nil)
+                if e != nil {
+                    fmt.Println(e)
+                }
                 time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
-                RPCToServer.Call("SharedResourceService.ReleaseSharedResource", fmt.Sprintf("%d", clientIndex), nil)
+                e = RPCToServer.Call("SharedResourceService.ReleaseSharedResource", fmt.Sprintf("%d", clientIndex), nil)
+                if e != nil {
+                    fmt.Println(e)
+                }
+                fmt.Printf("[%s] %d leave critial section\n", time.Now().Format("15:04:05.000"), clientIndex)
                 mutex.Lock()
                 requestQ = requestQ[1:]
                 requestStatusQ = requestStatusQ[1:]
