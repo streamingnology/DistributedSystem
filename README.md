@@ -2,6 +2,7 @@
 Lamport Algorithm: source code is in the lamport folder.
 
 compile server: go build server.go utils.go
+
 compile client: go build client.go message.go messagequeue.go utils.go
 
 run client:
@@ -17,6 +18,7 @@ server.exe
 Raymond Algorithm: source code is in RaymondAlgorithm folder.
 
 compile server: go build server.go utils.go
+
 compile client: go build client.go message.go utils.go
 
 run client:
